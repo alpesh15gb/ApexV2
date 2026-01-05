@@ -35,7 +35,7 @@ services:
       - HIKVISION_DB_PASSWORD=${HIKVISION_DB_PASSWORD:-Keystone@456}
       - HIKVISION_TABLE=${HIKVISION_TABLE:-hik_attendance_logs}
 
-  # Nginx Web Server (Custom build with config baked in)
+  # Nginx Web Server (Custom build)
   webserver:
     build:
       context: .
@@ -49,9 +49,9 @@ services:
     depends_on:
       - app
 
-  # MySQL Database (Main Application DB)
+  # Database (MariaDB 10.6 - Lighter/More Stable than MySQL 8)
   db:
-    image: mysql:8.0
+    image: mariadb:10.6
     container_name: apexv2_db
     restart: unless-stopped
     environment:
@@ -60,7 +60,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_USER: ${DB_USERNAME:-apexv2}
     volumes:
-      - apexv2_mysql_data:/var/lib/mysql
+      - apexv2_mariadb_data:/var/lib/mysql
     networks:
       - apexv2_network
 
@@ -77,5 +77,5 @@ networks:
     driver: bridge
 
 volumes:
-  apexv2_mysql_data:
+  apexv2_mariadb_data:
     driver: local
