@@ -104,6 +104,8 @@ return [
             'prefix_indexes' => true,
             'encrypt' => 'no',
             'trust_server_certificate' => true,
+            'timeout' => 60,
+            'connect_timeout' => 60,
         ],
 
         // MySQL Hikvision connection
