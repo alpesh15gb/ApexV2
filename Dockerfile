@@ -1,12 +1,13 @@
 # ApexV2 Attendance Management System
-# Multi-stage Dockerfile for production deployment
+# Dockerfile for production deployment
 
-FROM php:8.1-fpm as base
+FROM php:8.1-fpm
 
-# Install system dependencies (including curl FIRST)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    wget \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -17,13 +18,13 @@ RUN apt-get update && apt-get install -y \
     cron \
     gnupg2 \
     apt-transport-https \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC Driver for SQL Server
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft-prod.gpg \
-    && curl https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && sed -i 's/^deb /deb [signed-by=\/usr\/share\/keyrings\/microsoft-prod.gpg] /' /etc/apt/sources.list.d/mssql-release.list \
+# Install Microsoft ODBC Driver for SQL Server (Debian 12 / Bookworm)
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev \
     && apt-get clean \
@@ -70,5 +71,5 @@ RUN mkdir -p /var/log/php /var/log/supervisor
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
-# Start supervisor (manages PHP-FPM, cron, and queue worker)
+# Start supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
