@@ -17,49 +17,56 @@ services:
     depends_on:
       - db
     environment:
-      - APP_ENV=${APP_ENV:-production}
-      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=https://ksipl.apextime.in
       - DB_CONNECTION=mysql
       - DB_HOST=db
       - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE:-aws}
       - DB_USERNAME=${DB_USERNAME:-root}
       - DB_PASSWORD=${DB_PASSWORD:-secret}
-      # SQL Express (Punch Logs) - External Database
-      - SQLEXPRESS_HOST=${SQLEXPRESS_HOST:-host.docker.internal}
+      # SQL Express (Punch Logs) - Remote Server
+      - SQLEXPRESS_HOST=${SQLEXPRESS_HOST:-115.98.2.20}
       - SQLEXPRESS_PORT=${SQLEXPRESS_PORT:-1433}
-      - SQLEXPRESS_DATABASE=${SQLEXPRESS_DATABASE:-PunchDB}
-      - SQLEXPRESS_USERNAME=${SQLEXPRESS_USERNAME:-sa}
-      - SQLEXPRESS_PASSWORD=${SQLEXPRESS_PASSWORD:-}
-      - SQLEXPRESS_TABLE=${SQLEXPRESS_TABLE:-punch_logs}
-      - SQLEXPRESS_COL_EMPID=${SQLEXPRESS_COL_EMPID:-employee_id}
-      - SQLEXPRESS_COL_PUNCHTIME=${SQLEXPRESS_COL_PUNCHTIME:-punch_time}
-      - SQLEXPRESS_COL_PUNCHTYPE=${SQLEXPRESS_COL_PUNCHTYPE:-punch_type}
-      # Hikvision MySQL - External Database
-      - HIKVISION_DB_HOST=${HIKVISION_DB_HOST:-host.docker.internal}
+      - SQLEXPRESS_DATABASE=${SQLEXPRESS_DATABASE:-etimetracklite1}
+      - SQLEXPRESS_USERNAME=${SQLEXPRESS_USERNAME:-essl}
+      - SQLEXPRESS_PASSWORD=${SQLEXPRESS_PASSWORD:-Keystone@456}
+      # Hikvision MySQL
+      - HIKVISION_DB_HOST=${HIKVISION_DB_HOST:-115.98.2.20}
       - HIKVISION_DB_PORT=${HIKVISION_DB_PORT:-3306}
-      - HIKVISION_DB_DATABASE=${HIKVISION_DB_DATABASE:-hikvision}
+      - HIKVISION_DB_DATABASE=${HIKVISION_DB_DATABASE:-etimetracklite1}
       - HIKVISION_DB_USERNAME=${HIKVISION_DB_USERNAME:-root}
-      - HIKVISION_DB_PASSWORD=${HIKVISION_DB_PASSWORD:-}
-      - HIKVISION_TABLE=${HIKVISION_TABLE:-attendance_events}
-      - HIKVISION_COL_EMPID=${HIKVISION_COL_EMPID:-employee_id}
-      - HIKVISION_COL_EVENTTIME=${HIKVISION_COL_EVENTTIME:-event_time}
-      - HIKVISION_COL_EVENTTYPE=${HIKVISION_COL_EVENTTYPE:-event_type}
+      - HIKVISION_DB_PASSWORD=${HIKVISION_DB_PASSWORD:-Keystone@456}
+      - HIKVISION_TABLE=${HIKVISION_TABLE:-hik_attendance_logs}
 
-  # Nginx Web Server
+  # Nginx Web Server with SSL
   webserver:
     image: nginx:alpine
     container_name: apexv2_webserver
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./:/var/www
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx-prod.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/ssl:/etc/nginx/ssl
+      - ./docker/certbot/conf:/etc/letsencrypt
+      - ./docker/certbot/www:/var/www/certbot
     networks:
       - apexv2_network
     depends_on:
       - app
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: apexv2_certbot
+    volumes:
+      - ./docker/certbot/conf:/etc/letsencrypt
+      - ./docker/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   # MySQL Database (Main Application DB)
   db:
@@ -73,18 +80,14 @@ services:
       MYSQL_USER: ${DB_USERNAME:-apexv2}
     volumes:
       - apexv2_mysql_data:/var/lib/mysql
-    ports:
-      - "3307:3306"
     networks:
       - apexv2_network
 
-  # Redis Cache (Optional)
+  # Redis Cache
   redis:
     image: redis:alpine
     container_name: apexv2_redis
     restart: unless-stopped
-    ports:
-      - "6380:6379"
     networks:
       - apexv2_network
 
