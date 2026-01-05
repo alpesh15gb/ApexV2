@@ -22,15 +22,17 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Downgrade OpenSSL security level to allow legacy SQL Server connections
-# This is required for connecting to older SQL Servers that use legacy TLS/Cipher suites
-RUN sed -i 's/SECLEVEL=2/SECLEVEL=1/g' /etc/ssl/openssl.cnf
+# Fix for OpenSSL 3 (Debian 12) connecting to legacy SQL Server
+# We append the configuration because specific string replacement might fail
+RUN sed -i 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/g' /etc/ssl/openssl.cnf || true
+# Ensure it is set at the bottom if not found
+RUN echo "\n[system_default_sect]\nCipherString = DEFAULT@SECLEVEL=1\n" >> /etc/ssl/openssl.cnf
 
 # Install Microsoft ODBC Driver for SQL Server (Debian 12 / Bookworm)
 RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev mssql-tools18 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
