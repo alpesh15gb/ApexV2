@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Development files
+.env
+.env.local
+.env.*.local
+.editorconfig
+.styleci.yml
+phpunit.xml
+
+# Dependencies (will be installed in container)
+/vendor
+/node_modules
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and caches (will be generated in container)
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*
+
+# Keep directory structure
+!.gitkeep
+
+# Docker (prevent recursive copy)
+docker-compose*.yml.bak
+
+# Testing
+/tests
+/phpunit.xml
+/.phpunit.result.cache
+
+# Documentation
+/docs
+*.md
+!README.md
+
+# CI/CD
+.github
+.cpanel.yml

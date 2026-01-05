@@ -1,0 +1,4 @@
+# Laravel scheduler cron job
+# Runs every minute to check for scheduled tasks
+
+* * * * * cd /var/www && php artisan schedule:run >> /var/log/cron.log 2>&1
