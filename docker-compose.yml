@@ -35,17 +35,16 @@ services:
       - HIKVISION_DB_PASSWORD=${HIKVISION_DB_PASSWORD:-Keystone@456}
       - HIKVISION_TABLE=${HIKVISION_TABLE:-hik_attendance_logs}
 
-  # Nginx Web Server
+  # Nginx Web Server (Custom build with config baked in)
   webserver:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
     container_name: apexv2_webserver
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./:/var/www:ro
-      - ./docker/nginx-prod.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - apexv2_network
     depends_on:
