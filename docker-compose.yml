@@ -43,8 +43,7 @@ services:
     container_name: apexv2_webserver
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     networks:
       - apexv2_network
     depends_on:
