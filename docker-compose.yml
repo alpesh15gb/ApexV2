@@ -49,11 +49,13 @@ services:
     depends_on:
       - app
 
-  # Database (MariaDB 10.6 - Lighter/More Stable than MySQL 8)
+  # Database (MariaDB 10.6 - Optimized for Low RAM)
   db:
     image: mariadb:10.6
     container_name: apexv2_db
     restart: unless-stopped
+    # Low memory optimization: 128MB buffer pool, disabled performance schema
+    command: --innodb-buffer-pool-size=128M --performance-schema=0 --max-connections=50
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-aws}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
