@@ -102,7 +102,8 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            'trust_server_certificate' => env('SQLEXPRESS_TRUST_CERT', true),
+            'encrypt' => 'no',
+            'trust_server_certificate' => true,
         ],
 
         // MySQL Hikvision connection
