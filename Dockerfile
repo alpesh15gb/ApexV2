@@ -3,7 +3,7 @@
 
 FROM php:8.1-fpm as base
 
-# Install system dependencies
+# Install system dependencies (including curl FIRST)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -16,12 +16,14 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     cron \
     gnupg2 \
+    apt-transport-https \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Microsoft ODBC Driver for SQL Server
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft-prod.gpg \
+    && curl https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && sed -i 's/^deb /deb [signed-by=\/usr\/share\/keyrings\/microsoft-prod.gpg] /' /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev \
     && apt-get clean \
@@ -61,6 +63,9 @@ RUN chmod 0644 /etc/cron.d/laravel-scheduler \
 
 # Copy supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create log directories
+RUN mkdir -p /var/log/php /var/log/supervisor
 
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
